@@ -1,84 +1,59 @@
 import numpy as np
 import cv2
-import cv2.aruco as aruco
 import glob
-import math
+import yaml
+#import pathlib
 
-markerLength = 0.25
-
-cap = cv2.VideoCapture('tags.mp4')
-
+# termination criteria
 criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 30, 0.001)
+# prepare object points, like (0,0,0), (1,0,0), (2,0,0) ....,(6,5,0)
+objp = np.zeros((7*7,3), np.float32)
+objp[:,:2] = np.mgrid[0:7,0:7].T.reshape(-1,2)
+# Arrays to store object points and image points from all the images.
+objpoints = [] # 3d point in real world space
+imgpoints = [] # 2d points in image plane.
 
-objp = np.zeros((6*7,3), np.float32)
-objp[:,:2] = np.mgrid[0:7,0:6].T.reshape(-1,2)
+images = glob.glob(r'images/*.jpg')
 
-objpoints = [] 
-imgpoints = []
+#path = 'D:\programacion\aruco_cv2\results'
+#pathlib.Path(path).mkdir(parents=True, exist_ok=True) 
 
-images = glob.glob('calib_images/*.jpg')
-
-for fname in images:
-    img = cv2.imread(fname)
-    gray = cv2.cvtColor(img,cv2.COLOR_BGR2GRAY)
-
-    ret, corners = cv2.findChessboardCorners(gray, (7,6),None)
-
+found = 0
+for fname in images:  # Here, 10 can be changed to whatever number you like to choose
+    img = cv2.imread(fname) # Capture frame-by-frame
+    #print(images[im_i])
+    gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+    # Find the chess board corners
+    ret, corners = cv2.findChessboardCorners(gray, (7,7), None)
+    # If found, add object points, image points (after refining them)
     if ret == True:
-        objpoints.append(objp)
-
+        objpoints.append(objp)   # Certainly, every loop objp is the same, in 3D.
         corners2 = cv2.cornerSubPix(gray,corners,(11,11),(-1,-1),criteria)
         imgpoints.append(corners2)
-        img = cv2.drawChessboardCorners(img, (7,6), corners2,ret)
+        # Draw and display the corners
+        img = cv2.drawChessboardCorners(img, (7,7), corners2, ret)
+        found += 1
+        cv2.imshow('img', img)
+        cv2.waitKey(500)
+        # if you want to save images with detected corners 
+        # uncomment following 2 lines and lines 5, 18 and 19
+        #image_name = path + '/calibresult' + str(found) + '.png'
+        #cv2.imwrite(image_name, img)
+        
+        ret, mtx, dist, rvecs, tvecs = cv2.calibrateCamera(objpoints, imgpoints, gray.shape[::-1], None, None)
+        data = {'camera_matrix': np.asarray(mtx).tolist(),
+        'dist_coeff': np.asarray(dist).tolist()}
+        print(data)
+# and save it to a file
+        with open("calibration_matrix.yaml", "w") as f:
+            yaml.dump(data, f)
+print("Number of images used for calibration: ", found)
 
-
-    ret, mtx, dist, rvecs, tvecs = cv2.calibrateCamera(objpoints, imgpoints, gray.shape[::-1],None,None)
-
-calibrationFile = "calibrationFileName.xml"
-calibrationParams = cv2.FileStorage(calibrationFile, cv2.FILE_STORAGE_READ) 
-camera_matrix = calibrationParams.getNode("cameraMatrix").mat() 
-dist_coeffs = calibrationParams.getNode("distCoeffs").mat() 
-count = 1
-while(True):
-    ret, frame = cap.read()
-
-    gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-    aruco_dict = aruco.Dictionary_get(aruco.DICT_5X5_250)
-    arucoParameters =  aruco.DetectorParameters_create()
-    aruco_list = {}
-    corners, ids, rejectedImgPoints = aruco.detectMarkers(gray, aruco_dict, parameters=arucoParameters)
-    if np.all(ids != None):
-        if len(corners):
-            for k in range(len(corners)):
-                temp_1 = corners[k]
-                temp_1 = temp_1[0]
-                temp_2 = ids[k]
-                temp_2 = temp_2[0]
-                aruco_list[temp_2] = temp_1
-        key_list = aruco_list.keys()
-        font = cv2.FONT_HERSHEY_SIMPLEX
-        for key in key_list:
-            dict_entry = aruco_list[key]    
-            centre = dict_entry[0] + dict_entry[1] + dict_entry[2] + dict_entry[3]
-
-            centre[:] = [int(x / 4) for x in centre]
-            orient_centre = centre + [0.0,5.0]
-            centre = tuple(centre)  
-            orient_centre = tuple((dict_entry[0]+dict_entry[1])/2)
-            #cv2.circle(frame,centre,1,(0,0,255),8)
-            border_file=open('borders.txt','w')
-            print(centre,file=border_file)
-            border_file.close()
-
-            
-        display = aruco.drawDetectedMarkers(frame, corners)
-        display = np.array(display)
-    else:
-        display = frame
-
-    cv2.imshow('Display',display)
-    if cv2.waitKey(1) & 0xFF == ord('q'):
-            break
-
-cap.release()
+# When everything done, release the capture
+#cap.release()
 cv2.destroyAllWindows()
+
+# calibration
+
+# transform the matrix and distortion coefficients to writable lists
+
