@@ -5,7 +5,7 @@ import sys
 import shutil
 
 #Function to detect tags
-def findArucoMarkers(img, markerSize = 5, totalMarkers=250, draw=True):
+def findArucoMarkers(img, markerSize = 4, totalMarkers=250, draw=True):
     gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
     key = getattr(aruco, f'DICT_{markerSize}X{markerSize}_{totalMarkers}')
     arucoDict = aruco.Dictionary_get(key)
@@ -15,12 +15,12 @@ def findArucoMarkers(img, markerSize = 5, totalMarkers=250, draw=True):
         aruco.drawDetectedMarkers(img, bboxs) 
     return [bboxs,ids]
 
-cap = cv2.VideoCapture('tags.mp4')
+cap = cv2.VideoCapture(0)
 
 while True:
     
     orig_stdout=sys.stdout
-    f=open('c2.txt','w')
+    f=open('/home/aldemar/Trabajo/tagsAruco/aruco_cv2_multiple_tag_detection/src/c2.txt','w')
     sys.stdout=f
             
     success, img = cap.read()
@@ -32,14 +32,14 @@ while True:
         sys.stdout=orig_stdout
     
     #Write the BBOX coordinates
-    file_=open('c2.txt','r')
+    file_=open('/home/aldemar/Trabajo/tagsAruco/aruco_cv2_multiple_tag_detection/src/c2.txt','r')
     l=file_.readlines()
     if len([i for i in l])>=4:
-        shutil.copyfile('c2.txt','c2_copy.txt')
+        shutil.copyfile('/home/aldemar/Trabajo/tagsAruco/aruco_cv2_multiple_tag_detection/src/c2.txt','/home/aldemar/Trabajo/tagsAruco/aruco_cv2_multiple_tag_detection/src/c2_copy.txt')
         file_.close()
 
     #Read the txt coordinates copy file and extract 
-    z=open('c2_copy.txt','r')
+    z=open('/home/aldemar/Trabajo/tagsAruco/aruco_cv2_multiple_tag_detection/src/c2_copy.txt','r')
     new_file=z.readlines()
     c1= [i.strip() for i in new_file][0:1]
     c2= [i.strip() for i in new_file][1:2]
@@ -63,7 +63,8 @@ while True:
     d=cv2.warpPerspective(img,tran,(480,300))
     
     #Show the new video with apply transformation perspective
-    cv2.imshow('img',d)
+    cv2.imshow('img',img)
+    cv2.imshow('transformacion',d)
     k = cv2.waitKey(30) & 0xff
     if k == 27:
         break
