@@ -24,7 +24,7 @@ for fname in images:  # Here, 10 can be changed to whatever number you like to c
     #print(images[im_i])
     gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
     # Find the chess board corners
-    ret, corners = cv2.findChessboardCorners(gray, (9,6), None)
+    ret, corners = cv2.findChessboardCorners(gray, (6,9), None)
     # If found, add object points, image points (after refining them)
     if ret == True:
         objpoints.append(objp)   # Certainly, every loop objp is the same, in 3D.
