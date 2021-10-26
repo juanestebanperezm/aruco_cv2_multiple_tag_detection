@@ -10,7 +10,10 @@ file_='calibration_matrix.yaml'
 def findArucoMarkers(img, markerSize = str('APRILTAG'), totalMarkers=str('25h9'), draw=True):
     x=yaml.safe_load(open("src/calibration_matrix.yaml",'r'))
     gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-    key = getattr(aruco, f'DICT_{markerSize}_{totalMarkers}')
+    if markerSize=='APRILTAG':
+        key = getattr(aruco, f'DICT_{markerSize}_{totalMarkers}')
+    else:
+        key=getattr(aruco, f'DICT_{markerSize}X{markerSize}_{totalMarkers}')
     arucoDict = aruco.Dictionary_get(key)
     arucoParam = aruco.DetectorParameters_create()
     bboxs, ids, rejected = aruco.detectMarkers(gray, arucoDict, parameters = arucoParam,cameraMatrix=np.array([[646.7676471528549, 0.0, 318.93014949990015], [0.0, 647.3042988053412, 244.93412329482263], [0.0, 0.0, 1.0]]) ,distCoeff=np.array([[0.04953697129350694, -0.4206829889465348, 0.0017941220198914778, -0.006434768303329634, 1.6399056290328016]]))
