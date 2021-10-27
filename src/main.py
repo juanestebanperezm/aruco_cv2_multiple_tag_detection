@@ -5,11 +5,12 @@ import yaml
 import pandas as pd
 
 
+
 file_='calibration_matrix.yaml'
 #Function to detect tags
-def findArucoMarkers(img, markerSize = str('5'), totalMarkers=str('250'), draw=True):
-    #x=yaml.safe_load(open("src/calibration_matrix.yaml",'r'))
-    gray = cv2.cvtColor(img_, cv2.COLOR_BGR2GRAY)
+def findArucoMarkers(img, markerSize = str('4'), totalMarkers=str('250'), draw=True):
+    x=yaml.safe_load(open("src/calibration_matrix.yaml",'r'))
+    gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
     if markerSize=='APRILTAG':
         key = getattr(aruco, f'DICT_{markerSize}_{totalMarkers}')
     else:
@@ -18,9 +19,12 @@ def findArucoMarkers(img, markerSize = str('5'), totalMarkers=str('250'), draw=T
     arucoParam = aruco.DetectorParameters_create()
     corners, ids, rejected = aruco.detectMarkers(gray, arucoDict, parameters = arucoParam)
     #,cameraMatrix=np.array([[646.7676471528549, 0.0, 318.93014949990015], [0.0, 647.3042988053412, 244.93412329482263], [0.0, 0.0, 1.0]]) ,distCoeff=np.array([[0.04953697129350694, -0.4206829889465348, 0.0017941220198914778, -0.006434768303329634, 1.6399056290328016]])
+    bboxs, ids, rejected = aruco.detectMarkers(gray, arucoDict, parameters = arucoParam,cameraMatrix=np.array([[646.7676471528549, 0.0, 318.93014949990015], [0.0, 647.3042988053412, 244.93412329482263], [0.0, 0.0, 1.0]]) ,distCoeff=np.array([[0.04953697129350694, -0.4206829889465348, 0.0017941220198914778, -0.006434768303329634, 1.6399056290328016]]))
+
     if draw:
         aruco.drawDetectedMarkers(img_, corners) 
     return [corners,ids]
+
 
 cap = cv2.VideoCapture('D:\\programacion\\aruco_cv2\\src\\tags.mp4')
 
@@ -56,6 +60,7 @@ while True:
         
         cor['refPt2'] = '' if len(x2)<4 else sum(x2[0:4])/4
 
+
         index3 = np.squeeze(np.where(ids==3))
         x3 = [np.squeeze(corners[index3[0]])[0], 
             np.squeeze(corners[index3[0]])[1],
@@ -90,6 +95,11 @@ while True:
         print('coordinates are empty')
 
     
+    
+    #Show the new video with apply transformation perspective
+    cv2.imshow('img',img)
+    cv2.imshow('transformacion',d)
+
     k = cv2.waitKey(30) & 0xff
     if k == 27:
         break
