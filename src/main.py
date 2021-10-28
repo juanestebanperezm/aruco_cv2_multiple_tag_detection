@@ -8,6 +8,7 @@ import pandas as pd
 
 file_='calibration_matrix.yaml'
 #Function to detect tags
+#Set type of markers at markerSize and totalMarkers
 def findArucoMarkers(img, markerSize = str('APRILTAG'), totalMarkers=str('25h9'), draw=True):
     x=yaml.safe_load(open("src/calibration_matrix.yaml",'r'))
     gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
